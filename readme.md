@@ -1,4 +1,4 @@
-# BlackSheep: <cool tagline>
+# BlackSheep: [cool tagline]
 
 ## Design
 
