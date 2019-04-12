@@ -21,12 +21,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 package main
 
 import (
-	"bufio"
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 
 	"github.com/bwmarrin/discordgo"
 )
@@ -35,41 +34,29 @@ var (
 	customCommands = make(map[string]string)
 )
 
+const (
+	COLOR_ERROR   = 0x8b1117 /* Dark red */
+	COLOR_SUCCESS = 0x006606 /* Dark green */
+	COLOR_NOTICE  = 0x00549d /* Dark blue */
+)
+
 func Selfbot(Discord *discordgo.Session) {
+	/*
+	 * ParseCustomCommands() uses json.Unmashal to pass the data of commands.json
+	 * directly to the customCommands map.2
+	 */
 	ParseCustomCommands()
 	Discord.AddHandler(OnMessageCreate)
 	err := Discord.Open()
 	if err != nil {
 		Fatal("Failed to start selfbot, " + err.Error())
 	}
-	fmt.Println("Using prefix", UserConfig.SelfBotCopypastas)
-	fmt.Println("Type `exit` to exit")
+	fmt.Println("Using prefix", UserConfig.SelfBotPrefix)
 	fmt.Println("Listening for messages")
-	exitScanner := bufio.NewScanner(os.Stdin)
-	for exitScanner.Scan() {
-		if exitScanner.Text() == "exit" {
-			os.Exit(0)
-		}
-	}
-}
-
-func ParseCustomCommands() {
-	commandsFile := configFolder + "commands.json"
-	if _, err := os.Stat(commandsFile); os.IsNotExist(err) {
-		file, err := os.Create(commandsFile)
-		if err != nil {
-			Fatal("Failed to create commands.json: " + err.Error())
-		}
-		file.Close()
-	}
-	data, err := ioutil.ReadFile(commandsFile)
-	if err != nil {
-		Fatal("Failed to open commands.json " + err.Error())
-	}
-	err = json.Unmarshal(data, &customCommands)
-	if err != nil {
-		Fatal("Failed to parse commands.json " + err.Error())
-	}
+	signalChan := make(chan os.Signal, 1)
+	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM, os.Interrupt,
+		os.Kill)
+	<-signalChan
 }
 
 func OnMessageCreate(Discord *discordgo.Session,
@@ -84,46 +71,64 @@ func OnMessageCreate(Discord *discordgo.Session,
 	}
 	command := strings.Split(
 		message.Content[len(UserConfig.SelfBotPrefix):len(message.Content)], " ")[0]
-	messageContent := message.Content[len(UserConfig.SelfBotPrefix)+
-		len(command) : len(message.Content)]
+	var messageContent string
+	if len(strings.Split(message.Content, " ")) > 1 {
+		messageContent = message.Content[len(UserConfig.SelfBotPrefix)+
+			len(command)+1 : len(message.Content)]
+	}
 	newMessage := discordgo.NewMessageEdit(message.ChannelID, message.ID)
+	/*
+	 * We only want to display the embed here, so we empty out the message
+	 * "content".
+	 */
+	newMessage.SetContent("")
 	switch {
 	case command == "about":
-		/*
-		 * We only want to display the embed here, so we empty out the message
-		 * "content".
-		 */
-		newMessage.SetContent("")
 		newMessage.SetEmbed(&discordgo.MessageEmbed{
 			URL:         "https://github.com/t1ra/blacksheep",
 			Title:       "Blacksheep",
 			Description: "The Discord tooling powerhouse.",
-			Color:       0xff00ba, /* A beautiful pink :) */
+			Color:       COLOR_NOTICE,
 		})
 	case command == "help":
-		newMessage.SetContent("")
 		newMessage.SetEmbed(&discordgo.MessageEmbed{
 			Title:       "Blacksheep",
 			Description: "Help",
-			Color:       0xff00ba,
-			Fields:      HelpFields(),
+			Color:       COLOR_NOTICE,
+			Fields:      append(HelpFields(), CustomCommands(customCommands)...),
 		})
 	case command == "huge":
 		newMessage.SetContent(Huge(messageContent))
 	case command == "copypasta":
 		newMessage.SetContent(Copypasta(UserConfig.SelfBotCopypastas))
-	case command == "command":
+	case command == "command" && len(strings.Split(messageContent, " ")) > 1:
 		switch strings.Split(messageContent, " ")[0] {
-		case "list":
-			newMessage.SetContent("")
-			newMessage.SetEmbed(&discordgo.MessageEmbed{
-				Title:       "Custom Commands",
-				Description: "Your custom commands",
-				Color:       0xff00ba,
-				Fields:      CustomCommands(customCommands),
-			})
 		case "new":
-			NewCustomCommand(messageContent[4:len(messageContent)])
+			newMessage.SetEmbed(
+				NewCustomCommand(messageContent[4:len(messageContent)]))
+		case "delete":
+			newMessage.SetEmbed(DeleteCustomCommand(strings.Split(
+				messageContent, " ")[1]))
+		default:
+			newMessage.SetEmbed(&discordgo.MessageEmbed{
+				Title:       "Hva?",
+				Description: "That doesn't look like a valid sub-command.",
+				Color:       COLOR_ERROR,
+			})
+		}
+	case command == "owoify":
+		newMessage.SetContent(Owoify(messageContent))
+	default:
+		if content, ok := customCommands[command]; ok {
+			newMessage.SetContent(content)
+		} else {
+			newMessage.SetEmbed(&discordgo.MessageEmbed{
+				Title: "Hva?",
+				Description: "That doesn't look like a valid command. Try one of" +
+					" these:",
+				Color:  COLOR_ERROR,
+				Fields: HelpFields(),
+			})
 		}
 	}
 	/*

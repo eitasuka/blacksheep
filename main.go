@@ -195,7 +195,7 @@ func ParseConfig() Config {
 			defer file.Close()
 			fmt.Fprintf(file, document.String())
 			fmt.Println("Wrote blacksheep.toml. Edit this,then run BlackSheep" +
-				"again.")
+				" again.")
 			os.Exit(1)
 		}
 	}

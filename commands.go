@@ -20,7 +20,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 package main
 
 import (
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
 	"math/rand"
+	"os"
 	"regexp"
 	"strings"
 	"time"
@@ -87,6 +91,16 @@ can't because I'm an adult unlike y'all I presume. Damn high school was fun :/
 minus the detentions for picking on the nerds, haha.
 `,
 	}
+	owoify = strings.NewReplacer(
+		"you", "u",
+		"love", "luv",
+		"r", "w",
+		"l", "w",
+		"n", "ny",
+		" to", "a",
+		"and", "n",
+		".", " uwu ",
+		":)", "nyaa!~")
 )
 
 /*
@@ -104,8 +118,79 @@ func CustomCommands(commands map[string]string) []*discordgo.MessageEmbedField {
 	return embed
 }
 
-func NewCustomCommand(command string) {
+func ParseCustomCommands() {
+	commandsFile := configFolder + "commands.json"
+	if _, err := os.Stat(commandsFile); os.IsNotExist(err) {
+		file, err := os.Create(commandsFile)
+		if err != nil {
+			Fatal("Failed to create commands.json: " + err.Error())
+		}
+		file.Close()
+		return
+	}
+	data, err := ioutil.ReadFile(commandsFile)
+	if string(data) == "" {
+		return
+	}
+	if err != nil {
+		Fatal("Failed to open commands.json: " + err.Error())
+	}
+	err = json.Unmarshal(data, &customCommands)
+	if err != nil {
+		Fatal("Failed to parse commands.json: " + err.Error())
+	}
+	if len(customCommands) != 0 {
+		fmt.Println("Loaded custom commands:")
+		for key, _ := range customCommands {
+			fmt.Println(key)
+		}
+	}
+}
 
+func NewCustomCommand(command string) *discordgo.MessageEmbed {
+	if len(strings.Split(command, " ")) <= 1 {
+		return &discordgo.MessageEmbed{
+			Title:       "Failed to create new custom command",
+			Description: "You haven't provided a command body.",
+			Color:       COLOR_ERROR,
+		}
+	}
+	commandSplit := strings.Split(command, " ")
+	commandName := commandSplit[0]
+	commandBody := strings.Join(commandSplit[1:len(commandSplit)], " ")
+	customCommands[commandName] = commandBody
+	jsonData, err := json.Marshal(customCommands)
+	if err != nil {
+		Fatal("Failed to marshal custom commands: " + err.Error())
+	}
+	ioutil.WriteFile(configFolder+"commands.json", []byte(jsonData), 0600)
+	return &discordgo.MessageEmbed{
+		Title:       "Created new custom command",
+		Description: fmt.Sprintf("Created new custom command %v", commandName),
+		Color:       COLOR_SUCCESS,
+	}
+}
+
+func DeleteCustomCommand(command string) *discordgo.MessageEmbed {
+	if _, exists := customCommands[command]; !exists {
+		return &discordgo.MessageEmbed{
+			Title: "That command doesn't exist.",
+			Description: "Failed to delete" +
+				fmt.Sprintf(" %v because it doesn't exist", command),
+			Color: COLOR_ERROR,
+		}
+	}
+	delete(customCommands, command)
+	jsonData, err := json.Marshal(customCommands)
+	if err != nil {
+		Fatal("Failed to marshal custom commands: " + err.Error())
+	}
+	ioutil.WriteFile(configFolder+"commands.json", []byte(jsonData), 0600)
+	return &discordgo.MessageEmbed{
+		Title:       "Deleted custom command",
+		Description: fmt.Sprintf("Deleted %v", command),
+		Color:       COLOR_SUCCESS,
+	}
 }
 
 /*
@@ -116,7 +201,8 @@ func Huge(str string) string {
 	var hugeString strings.Builder
 	for _, char := range str {
 		if IsLetter(string(char)) {
-			hugeString.WriteString(":regional_indicator_" + string(char) + ": ")
+			hugeString.WriteString(":regional_indicator_" + strings.ToLower(
+				string(char)) + ": ")
 		} else if val, ok := charmap[string(char)]; ok {
 			hugeString.WriteString(val + " ")
 		} else if string(char) == " " {
@@ -167,5 +253,24 @@ func HelpFields() []*discordgo.MessageEmbedField {
 			Value:  "Select a random copypasta",
 			Inline: true,
 		},
+		&discordgo.MessageEmbedField{
+			Name: "command",
+			Value: "Create (command new <name> <body>) or delete (command" +
+				" delete <name>) custom commands.",
+			Inline: true,
+		},
+		&discordgo.MessageEmbedField{
+			Name:   "owoify",
+			Value:  "OwO-ify a string! nyaa~",
+			Inline: true,
+		},
 	}
+}
+
+/*
+ * the `owoify` command
+ */
+
+func Owoify(message string) string {
+	return owoify.Replace(message)
 }
