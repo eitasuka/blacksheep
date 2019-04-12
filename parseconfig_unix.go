@@ -26,5 +26,6 @@ var (
 	 * the user's home directory.
 	 */
 	usr, _          = user.Current()
-	configDirectory = usr.HomeDir + "/.config/blacksheep.toml"
+	configDirectory = usr.HomeDir + "/.config/blacksheep/blacksheep.toml"
+	configFolder    = usr.HomeDir + "/.config/blacksheep/"
 )

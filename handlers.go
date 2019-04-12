@@ -16,8 +16,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 /*
- * text.go implements a few functions for printing pretty errors, these are used
- * all across other files.
+ * handlers.go implements a few functions for printing pretty errors,
+ *  these are used all across other files.
  */
 package main
 
@@ -37,10 +37,6 @@ func Fatal(err string) {
 
 func Warning(err string) {
 	fmt.Println(aurora.Brown(aurora.Bold("Warning:")), aurora.Brown(err))
-}
-
-func Notice(str string) {
-	fmt.Println(aurora.Gray(str))
 }
 
 func Success(str string) {

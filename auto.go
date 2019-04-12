@@ -16,7 +16,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 /*
- * auto.go contais functions that are automated -- scraping, detail grabbing,
+ * auto.go contains functions that are automated -- scraping, detail grabbing,
  * and such.
  */
 package main

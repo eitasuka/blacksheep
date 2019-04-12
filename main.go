@@ -41,7 +41,7 @@ var (
 	 * ./blacksheep --help is required to get the actual help text.
 	 */
 	serverID = kingpin.Flag("server", "A server ID to connect or scrape.").
-			Required().String()
+			String()
 	/*
 	 * scrape scrapes content from a specified server and optionally, a
 	 * specific channel. If no channel is provided, it downloads from every
@@ -65,6 +65,10 @@ var (
 	 * control gives the user the ability to control any account via a CLI.
 	 */
 	control = kingpin.Command("control", "Control an account.")
+	/*
+	 * self starts a selfbot instance.
+	 */
+	self = kingpin.Command("self", "Start a selfbot.")
 )
 
 type Config struct {
@@ -72,15 +76,15 @@ type Config struct {
 	 * Config is a struct used to store values taken from config.toml, and is
 	 * used to generate a new config in the case of one not existing.
 	 */
-	Token         string
-	SaveDirectory string
+	Token             string
+	SaveDirectory     string
+	SelfBotPrefix     string
+	SelfBotCopypastas []string
 }
 
+var UserConfig = ParseConfig()
+
 func main() {
-	UserConfig, err := ParseConfig()
-	if err != nil {
-		Fatal(err.Error())
-	}
 	command := kingpin.Parse()
 	/*
 	 * Here we create new *discordgo.Session instance. Discord will be passed
@@ -134,43 +138,55 @@ func main() {
 		GetGuildDetails(Discord, *serverID)
 	case control.FullCommand():
 		ControlAccount(Discord, *serverID)
+	case self.FullCommand():
+		/*
+		 * All the work here is done by code in the selfbot/ directory.
+		 */
+		Selfbot(Discord)
 	}
 }
 
-func ParseConfig() (Config, error) {
+func ParseConfig() Config {
 	/*
-	 * ParseConfig parses the config.yaml file IF it exists. Otherwise, it
+	 * ParseConfig parses the blacksheep.toml file IF it exists. Otherwise, it
 	 * generates a new one from a template and exits with an error code.
 	 * ParseConfig relies on configDirectory, which is defined in separate source
 	 * files depending on the target platform. On windows, parseconfig_windows.go
 	 * is compiled, and the config directory is set to the current working
 	 * directory, and parseconfig_unix.go is ignored. on !windows, it's
-	 * reversed, and the config directory is set to ~/.config/blacksheep.yaml
+	 * reversed, and the config directory is set to
+	 * ~/.config/blacksheep/blacksheep.toml
 	 */
 	var UserConfig Config
 	_, err := toml.DecodeFile(configDirectory, &UserConfig)
 	if err != nil {
 		/*
-		 * Something went wrong with parsing config.toml. Presumably, it doesn't
+		 * Something went wrong with parsing blacksheep.toml. Presumably, it doesn't
 		 * Exist yet.
 		 */
 		if _, err := os.Stat(configDirectory); os.IsNotExist(err) {
 			/* Warn the user that no (valid?) configuration file was found */
-			Warning("No config.toml found, generating a new one at " +
+			Warning("No blacksheep.toml found, generating a new one at " +
 				configDirectory)
 			/*
 			 * Encode the Config struct to TOML data
 			 */
 			document := new(bytes.Buffer)
 			if err := toml.NewEncoder(document).Encode(UserConfig); err != nil {
-				return UserConfig, err
+				Fatal(err.Error())
+			}
+			/*
+			 * If the blacksheep directory in configDirectory doesn't exist, make it.
+			 */
+			if _, err := os.Stat(configFolder); os.IsNotExist(err) {
+				os.Mkdir(configFolder, 0700)
 			}
 			/*
 			 * Make a new file at configDirectory and write the encoded data to it.
 			 */
 			file, err := os.OpenFile(configDirectory, os.O_RDWR|os.O_CREATE, 0600)
 			if err != nil {
-				return UserConfig, err
+				Fatal(err.Error())
 			}
 			/*
 			 * Write the data using fmt.Fprintf to the file's io.Writer,
@@ -178,7 +194,8 @@ func ParseConfig() (Config, error) {
 			 */
 			defer file.Close()
 			fmt.Fprintf(file, document.String())
-			Notice("Wrote blacksheep.toml. Edit this, then run BlackSheep again.")
+			fmt.Println("Wrote blacksheep.toml. Edit this,then run BlackSheep" +
+				"again.")
 			os.Exit(1)
 		}
 	}
@@ -191,5 +208,11 @@ func ParseConfig() (Config, error) {
 		UserConfig.SaveDirectory[len(UserConfig.SaveDirectory)-1] != '/' {
 		UserConfig.SaveDirectory = UserConfig.SaveDirectory + "/"
 	}
-	return UserConfig, err
+	/*
+	 * If the user hasn't defined a custom selfbot prefix, we default to ::
+	 */
+	if UserConfig.SelfBotPrefix == "" {
+		UserConfig.SelfBotPrefix = "::"
+	}
+	return UserConfig
 }
