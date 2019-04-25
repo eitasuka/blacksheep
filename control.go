@@ -1,24 +1,18 @@
 /*
 Copyright 2019 tira
 
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
+This program is free software: you can redistribute it and/or modify it under the terms of the GNU
+General Public License as published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
+even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
+You should have received a copy of the GNU General Public License along with this program. If not,
+see <http://www.gnu.org/licenses/>.
 */
 
-/*
- * control.go contains functions that are controlled by the user. Most
- * importantly implementing the ability to control bot accounts.
- */
 package main
 
 import (
@@ -46,36 +40,19 @@ var (
 	channelOptions map[string]string
 )
 
-func Usage(writer io.Writer) {
-	io.WriteString(writer, "Commands:\n")
-	io.WriteString(writer, completer.Tree("    "))
-}
-
-func Channels(Discord *discordgo.Session, serverID string) {
-	/*
-	 * Collects every text channel in the set server and adds them as valid
-	 * options for the set channel command.
-	 */
-	channels, err := Discord.GuildChannels(serverID)
-	if err != nil {
-		Warning(err.Error())
-	}
-	/* Initialising a map clears it */
-	channelOptions = make(map[string]string)
-	for _, channel := range channels {
-		if channel.Type == 0 { /* type 0 is a text channel */
-			fmt.Println(channel.Name)
-			channelOptions[channel.Name] = channel.ID
-		}
-	}
-}
-
+// ControlAccount gives the user a console to interact with.
 func ControlAccount(Discord *discordgo.Session, serverID string) {
 	/*
 	 * Write all the existing channels to the map.
 	 */
 	channelOptions = make(map[string]string)
 	channels, err := Discord.GuildChannels(serverID)
+	if err != nil {
+		if strings.Contains(err.Error(), "404 Not Found") {
+			Fatal("No server provided to join.")
+		}
+		Fatal(err.Error())
+	}
 	for _, channel := range channels {
 		channelOptions[channel.Name] = channel.ID
 	}
@@ -161,6 +138,32 @@ func ControlAccount(Discord *discordgo.Session, serverID string) {
 			return
 		default:
 			fmt.Println("?")
+		}
+	}
+}
+
+// Usage prints all the available commands.
+func Usage(writer io.Writer) {
+	io.WriteString(writer, "Commands:\n")
+	io.WriteString(writer, completer.Tree("    "))
+}
+
+// Channels lists all the of channels in a given server.
+func Channels(Discord *discordgo.Session, serverID string) {
+	/*
+	 * Collects every text channel in the set server and adds them as valid
+	 * options for the set channel command.
+	 */
+	channels, err := Discord.GuildChannels(serverID)
+	if err != nil {
+		Warning(err.Error())
+	}
+	/* Initialising a map clears it */
+	channelOptions = make(map[string]string)
+	for _, channel := range channels {
+		if channel.Type == 0 { /* type 0 is a text channel */
+			fmt.Println(channel.Name)
+			channelOptions[channel.Name] = channel.ID
 		}
 	}
 }

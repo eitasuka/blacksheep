@@ -1,4 +1,4 @@
-# Blacksheep: [cool tagline]
+# Blacksheep: The Discord Tooling Powerhouse.
 
 ## Design
 
@@ -34,19 +34,15 @@ See: `blacksheep help control`
 
 See: Configuration
 
-## Planned Features
-
 ### Selfbot
+
+* Convert text to regional indicators/emojis
+
+* Random Copypastas (with which you can add your own)
 
 * Custom commands
 
-* ~~Copypastas~~ **Done**
-
-* ~~Regional Indicator-ifier~~ **Done**
-
-* Message spam
-
-### Token Generator
+* owoify
 
 ## Performance
 
@@ -103,9 +99,8 @@ can simply execute `export PATH="$PATH:<your home direcjtory>/go/bin"`.
 ## Configuration
 
 Currently, a blacksheep.toml file can be located in two separate places,
-depending on the target platform. If you're using Windows, it's placed wherever
-Blacksheep is executed from (the current working directory,
-`./blacksheep.toml`). If you're using macOS or Linux, it's located in
+depending on the target platform. If you're using Windows, it's  at
+`%USER%/blacksheep.toml`. If you're using macOS or Linux, it's located in
 `~/.config/blacksheep/blacksheep.toml`. When you first install Blacksheep, this
 file wont exist -- one will be generated for you.
 
