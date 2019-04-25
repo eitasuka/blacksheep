@@ -67,7 +67,7 @@ If you're on Windows and want to build from source, make sure `git` is installed
 by downloading it from `https://git-scm.com/`
 
 If `$GOBIN` isn't already in your `$PATH`, you may need to add it. On Linux, you
-can simply execute `export PATH="$PATH:<your home direcjtory>/go/bin"`.
+can simply execute `export PATH="$PATH:<your home directory>/go/bin"`.
 
 ### Automagically
 
