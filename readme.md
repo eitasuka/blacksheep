@@ -132,7 +132,7 @@ Example: `SaveDirectory = "/mount/discordlogs"`
 The prefix that the selfbot will look for. If you want to use the default prefix, `::`, you can
 leave this blank.
 
-#### `SelfBotCopypastas` : []string
+#### `Copypastas` : []string
 
 An array of custom copypastas you'd like to add to the `copypasta` command. If you don't want to add
 any, you can leave this blank.
