@@ -48,6 +48,8 @@ See: Configuration
 
 * OwOify
 
+See: `blacksheep help self`
+
 ## Performance
 
 ### Channel Scraper
@@ -113,27 +115,26 @@ file, you can modify the following values:
 
 #### `Token` : string
 
-Your Discord user token, used to access many features in
-Blacksheep.
+Your Discord user token, used to access many features in Blacksheep. You need to have this for
+BlackSheep to work.
 
 Example: `Token = "SUPER-SECRET-TOKEN"`
 
 #### `SaveDirectory` : string
 
-An absolute path to where you would like Blacksheep to save files. If you want
-Blacksheep to save files relative to the current working directory, you can
-leave this blank.
+An absolute path to where you would like Blacksheep to save files. If you want Blacksheep to save
+files relative to the current working directory, you can leave this blank.
 
 Example: `SaveDirectory = "/mount/discordlogs"`
 
 #### `SelfBotPrefix` : string
 
-The prefix that the selfbot will look for. If you want to use the default
-prefix, `::`, you can leave this blank.
+The prefix that the selfbot will look for. If you want to use the default prefix, `::`, you can
+leave this blank.
 
 #### `SelfBotCopypastas` : []string
 
-An array of custom copypastas you'd like to add to the `copypasta` command.
-If you don't want to add any, you can leave this blank.
+An array of custom copypastas you'd like to add to the `copypasta` command. If you don't want to add
+any, you can leave this blank.
 
-Example: `SelfBotCopypastas = ["something", "very", "funny"]`
+Example: `Copypastas = ["something", "very", "funny"]`
