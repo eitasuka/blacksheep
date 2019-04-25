@@ -42,7 +42,11 @@ See: Configuration
 
 * Custom commands
 
-* owoify
+* Avatar Grabber
+
+* Grab User Account Information
+
+* OwOify
 
 ## Performance
 

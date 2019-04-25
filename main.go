@@ -72,7 +72,7 @@ type Config struct {
 	Token             string
 	SaveDirectory     string
 	SelfBotPrefix     string
-	SelfBotCopypastas []string
+	SelfBotCopypastas []string `toml:"Copypastas"`
 }
 
 func main() {
@@ -81,6 +81,7 @@ func main() {
 	 * ParseConfig doesn't return anything because it modifies the module-level UserConfig variable.
 	 */
 	ParseConfig()
+	fmt.Println(UserConfig.SelfBotCopypastas)
 	/*
 	 * CreateDiscordInstance is located in auto.go, and simply returns a
 	 * *discordgo.Session instance used in most all other functions.
