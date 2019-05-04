@@ -50,6 +50,14 @@ See: Configuration
 
 See: `blacksheep help self`
 
+### Information Scraping
+
+Grab
+
+* A list of channels
+
+* Information about a guild, including the guilds owner, region, roles, and other stats.
+
 ## Performance
 
 ### Channel Scraper
