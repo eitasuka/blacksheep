@@ -81,7 +81,9 @@ func main() {
 	 * ParseConfig doesn't return anything because it modifies the module-level UserConfig variable.
 	 */
 	ParseConfig()
-	fmt.Println(UserConfig.SelfBotCopypastas)
+	if len(UserConfig.SelfBotCopypastas) > 0 {
+		fmt.Printf("Custom copypastas: %v", UserConfig.SelfBotCopypastas)
+	}
 	/*
 	 * CreateDiscordInstance is located in auto.go, and simply returns a
 	 * *discordgo.Session instance used in most all other functions.

@@ -23,6 +23,7 @@ import (
 	"os"
 	"os/signal"
 	"regexp"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -141,6 +142,8 @@ func OnMessageCreate(Session *discordgo.Session, message *discordgo.MessageCreat
 		}
 	case command == "owoify":
 		newMessage.SetContent(Owoify(messageContent))
+	case command == "epoch":
+		newMessage.SetContent(Epoch())
 	default:
 		if content, ok := customCommands[command]; ok {
 			newMessage.SetContent(content)
@@ -383,6 +386,11 @@ func Avatar(Session *discordgo.Session, message *discordgo.MessageCreate) *disco
 		},
 		Color: colorSuccess,
 	}
+}
+
+// Epoch returns the current UNIX epoch.
+func Epoch() string {
+	return string(strconv.FormatInt(time.Now().Unix(), 10))
 }
 
 /* I'll leave this at the bottom because its unsightly. */
