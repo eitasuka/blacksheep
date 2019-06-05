@@ -122,8 +122,8 @@ func DownloadMedia(url, server, directory string, wg *sync.WaitGroup) {
 		Warning("Failed to download " + url + ": " + err.Error())
 	}
 	defer response.Body.Close()
-	file, err := os.Create(directory + strings.TrimSuffix(filepath.Base(url),
-		filepath.Ext(url)) + "-" + strconv.FormatInt(time.Now().UnixNano(), 10) + filepath.Ext(url))
+	fileName := directory + filepath.Base(url) + filepath.Ext(url)
+	file, err := os.Create(fileName + strconv.FormatInt(time.Now().Unix(), 10))
 	if err != nil {
 		Fatal("Failed to create file: " + err.Error())
 	}

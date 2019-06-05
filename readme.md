@@ -38,21 +38,25 @@ See: Configuration
 
 * Convert text to regional indicators/emojis
 
-* Random Copypastas (with which you can add your own)
+* Random & custom copypastas
 
 * Custom commands
 
-* Avatar Grabber
+* Avatar grabber
 
-* Grab User Account Information
+* User account information grabber
 
 * OwOify
+
+* Get the current UNIX Epoch
+
+* Letter / string spam
 
 See: `blacksheep help self`
 
 ### Information Scraping
 
-Grab
+You can grab
 
 * A list of channels
 
@@ -146,3 +150,7 @@ An array of custom copypastas you'd like to add to the `copypasta` command. If y
 any, you can leave this blank.
 
 Example: `Copypastas = ["something", "very", "funny"]`
+
+## Todo
+
+`typing` command to toggle the typing notification

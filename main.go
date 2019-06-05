@@ -82,7 +82,7 @@ func main() {
 	 */
 	ParseConfig()
 	if len(UserConfig.SelfBotCopypastas) > 0 {
-		fmt.Printf("Custom copypastas: %v", UserConfig.SelfBotCopypastas)
+		fmt.Printf("Custom copypastas: %+q\n", UserConfig.SelfBotCopypastas)
 	}
 	/*
 	 * CreateDiscordInstance is located in auto.go, and simply returns a
@@ -130,7 +130,7 @@ func ParseConfig() {
 		defer file.Close()
 		fmt.Fprintf(file, newConfig.String())
 		fmt.Println("Wrote blacksheep.toml. Edit this, then run Blacksheep again.")
-		os.Exit(1) /* Exit code 0 or 1? I guess this is an intentional and valid endpoint... */
+		os.Exit(1)
 	} else if err != nil {
 		/*
 		 * There was some other error with finding blacksheep.toml, maybe we don't have the right

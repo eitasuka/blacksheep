@@ -54,6 +54,7 @@ var (
 		"and", "n",
 		".", " uwu ",
 		":)", "nyaa!~")
+	typing = false
 )
 
 const (
@@ -144,6 +145,10 @@ func OnMessageCreate(Session *discordgo.Session, message *discordgo.MessageCreat
 		newMessage.SetContent(Owoify(messageContent))
 	case command == "epoch":
 		newMessage.SetContent(Epoch())
+	case command == "spam":
+		newMessage.SetContent(Spam(messageContent, true))
+	case command == "spamns":
+		newMessage.SetContent(Spam(messageContent, false))
 	default:
 		if content, ok := customCommands[command]; ok {
 			newMessage.SetContent(content)
@@ -211,7 +216,7 @@ func ParseCustomCommands() {
 }
 
 // NewCustomCommand creates a new custom command by adding it to the custom commands variable,
-// and to commands.json. Yes, this is here to satisfy golint.
+// and to commands.json.
 func NewCustomCommand(command string) *discordgo.MessageEmbed {
 	if len(command) < 5 {
 		return &discordgo.MessageEmbed{
@@ -300,7 +305,7 @@ func Huge(str string) string {
 func Copypasta(custom []string) string {
 	copypastas = append(copypastas, custom...)
 	rand.Seed(time.Now().Unix())
-	return copypastas[rand.Intn(len(copypastas))]
+	return copypastas[rand.Intn(len(copypastas)-1)+1]
 }
 
 // HelpFields returns every help item for every command in Blacksheep.
@@ -347,6 +352,21 @@ func HelpFields() []*discordgo.MessageEmbedField {
 			Value:  "Get a users avatar.",
 			Inline: true,
 		},
+		&discordgo.MessageEmbedField{
+			Name:   "epoch",
+			Value:  "Get the current epoch.",
+			Inline: true,
+		},
+		&discordgo.MessageEmbedField{
+			Name:   "spam",
+			Value:  "Spam a provided string. Or e.",
+			Inline: true,
+		},
+		&discordgo.MessageEmbedField{
+			Name:   "spamns",
+			Value:  "Same as spam, but without space delimiters",
+			Inline: true,
+		},
 	}
 }
 
@@ -391,6 +411,25 @@ func Avatar(Session *discordgo.Session, message *discordgo.MessageCreate) *disco
 // Epoch returns the current UNIX epoch.
 func Epoch() string {
 	return string(strconv.FormatInt(time.Now().Unix(), 10))
+}
+
+// Spam spams a provided letter (or e) the maximum amount of times.
+func Spam(str string, space bool) string {
+	if len(str) == 0 {
+		str = "e"
+	}
+	var nyString strings.Builder
+	if space {
+		for nyString.Len() < 2000 {
+			nyString.WriteString(str + " ")
+		}
+	} else {
+		for nyString.Len() < 2000 {
+			nyString.WriteString(str)
+		}
+	}
+	return nyString.String()[:2000]
+	// This is bad isn't it.
 }
 
 /* I'll leave this at the bottom because its unsightly. */
