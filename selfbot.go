@@ -54,7 +54,6 @@ var (
 		"and", "n",
 		".", " uwu ",
 		":)", "nyaa!~")
-	typing = false
 )
 
 const (
@@ -63,8 +62,13 @@ const (
 	colorNotice  = 0x00549d /* Dark blue */
 )
 
-// SelfBot parses the available custom commands and creates a handler that calls OnMessageCreate.
+// SelfBot parses the available custom commands and creates a handler that calls
+// OnMessageCreate.
 func SelfBot(Session *discordgo.Session) {
+	/* What it assigns the handler to is based on what arguments it takes, this is assigned
+	 * to fire whenever a new message is sent.
+	 */
+	Session.AddHandler(LogNewMessage) // TODO: Log edits and stuff
 	/*
 	 * ParseCustomCommands() uses json.Unmashal to pass the data of commands.json
 	 * directly to the customCommands map.
@@ -105,30 +109,30 @@ func OnMessageCreate(Session *discordgo.Session, message *discordgo.MessageCreat
 	 * "content".
 	 */
 	newMessage.SetContent("")
-	switch {
-	case command == "about":
+	switch command {
+	case "about":
 		newMessage.SetEmbed(&discordgo.MessageEmbed{
 			URL:         "https://github.com/t1ra/blacksheep",
 			Title:       "Blacksheep",
 			Description: "The Discord tooling powerhouse.",
 			Color:       colorNotice,
 		})
-	case command == "help":
+	case "help":
 		newMessage.SetEmbed(&discordgo.MessageEmbed{
 			Title:       "Blacksheep",
 			Description: "Help",
 			Color:       colorNotice,
 			Fields:      append(HelpFields(), CustomCommands(customCommands)...),
 		})
-	case command == "details":
+	case "details":
 		newMessage.SetEmbed(Details(Session, message))
-	case command == "avatar":
+	case "avatar":
 		newMessage.SetEmbed(Avatar(Session, message))
-	case command == "huge":
+	case "huge":
 		newMessage.SetContent(Huge(messageContent))
-	case command == "copypasta":
+	case "copypasta":
 		newMessage.SetContent(Copypasta(UserConfig.SelfBotCopypastas))
-	case command == "command":
+	case "command":
 		switch strings.Split(messageContent, " ")[0] {
 		case "new":
 			newMessage.SetEmbed(NewCustomCommand(messageContent))
@@ -141,13 +145,13 @@ func OnMessageCreate(Session *discordgo.Session, message *discordgo.MessageCreat
 				Color:       colorError,
 			})
 		}
-	case command == "owoify":
+	case "owoify":
 		newMessage.SetContent(Owoify(messageContent))
-	case command == "epoch":
+	case "epoch":
 		newMessage.SetContent(Epoch())
-	case command == "spam":
+	case "spam":
 		newMessage.SetContent(Spam(messageContent, true))
-	case command == "spamns":
+	case "spamns":
 		newMessage.SetContent(Spam(messageContent, false))
 	default:
 		if content, ok := customCommands[command]; ok {
@@ -428,8 +432,26 @@ func Spam(str string, space bool) string {
 			nyString.WriteString(str)
 		}
 	}
+	/* Just in case we're spamming an :emote:, it's better to cut it
+	 * at the last emote rather than splitting it.
+	 */
+	if string(str[0]) == ":" {
+		return nyString.String()[0:strings.LastIndex(nyString.String()[:2000], ":")]
+	}
 	return nyString.String()[:2000]
-	// This is bad isn't it.
+	/* This is bad isn't it. */
+}
+
+// LogNewMessage logs a new message to the console upon it being sent.
+func LogNewMessage(Session *discordgo.Session, m *discordgo.MessageCreate) {
+	idInt, err := strconv.Atoi(m.Message.ID)
+	if err != nil {
+		// This like, won't happen.
+		os.Exit(-8008)
+	}
+	timestamp := time.Unix((int64(idInt) / 4194304) + 1420070400000, 0)
+	fmt.Printf("At %v, in %v/%v, %v said:\n%v\n", timestamp, m.GuildID,
+		m.ChannelID, m.Message.Author, m.Message.Content)
 }
 
 /* I'll leave this at the bottom because its unsightly. */

@@ -61,6 +61,8 @@ var (
 	 * self starts a selfbot instance.
 	 */
 	self = kingpin.Command("self", "Start a selfbot.")
+	bringBackCache = self.Flag("cache", "The cache of messages backed up by bringback."+
+		"This argument overwrites the value in config.toml. Default: 10.").Int()
 )
 
 // UserConfig is used across multiple files, so its easier to define it here.
@@ -94,6 +96,7 @@ func main() {
 		Fatal("Failed to connect to Discord: " + err.Error())
 	}
 	Success(fmt.Sprintf("Connected as %v", username))
+	fmt.Println("Heartbeat:", Discord.HeartbeatLatency())
 	switch command {
 	case scrape.FullCommand():
 		Scrape(Discord, *serverID, *channelID, UserConfig.SaveDirectory)
