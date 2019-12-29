@@ -12,7 +12,6 @@ General Public License for more details.
 You should have received a copy of the GNU General Public License along with this program. If not,
 see <http://www.gnu.org/licenses/>.
 */
-/* https://lkml.org/lkml/2009/12/17/229 */
 
 package main
 
@@ -38,7 +37,7 @@ var (
 	 * serverID isn't required for every subcommand, but it's better to declare it here and check it
 	 * if we need it than to have scrapeServerID, controlServerID, etc.
 	 */
-	serverID = kingpin.Flag("server", "A server ID to connect or scrape.").String()
+	serverID = kingpin.Flag("server", "A server ID to connect to or scrape.").String()
 	/*
 	 * scrape scrapes content from a specified server and optionally, a specific channel. If no
 	 * channel is provided, it downloads from every channel the account token has access to.
@@ -60,9 +59,10 @@ var (
 	/*
 	 * self starts a selfbot instance.
 	 */
-	self = kingpin.Command("self", "Start a selfbot.")
-	bringBackCache = self.Flag("cache", "The cache of messages backed up by bringback."+
-		"This argument overwrites the value in config.toml. Default: 10.").Int()
+	self   = kingpin.Command("self", "Start a selfbot.")
+	lowkey = self.Flag("lowkey", "Lowkey mode will disable error messages when commands"+
+		" are typed incorrectly. Default: off").Bool()
+	noNew = self.Flag("no-new", "Only log message edits and deletions, not creation.").Bool()
 )
 
 // UserConfig is used across multiple files, so its easier to define it here.
@@ -75,6 +75,7 @@ type Config struct {
 	SaveDirectory     string
 	SelfBotPrefix     string
 	SelfBotCopypastas []string `toml:"Copypastas"`
+	Lowkey            bool
 }
 
 func main() {
@@ -165,4 +166,6 @@ func ParseConfig() {
 	if UserConfig.SelfBotPrefix == "" {
 		UserConfig.SelfBotPrefix = "::"
 	}
+
+	UserConfig.Lowkey = *lowkey
 }

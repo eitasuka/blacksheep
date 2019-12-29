@@ -52,6 +52,8 @@ See: Configuration
 
 * Letter / string spam
 
+* Manual @everyone
+
 See: `blacksheep help self`
 
 ### Information Scraping

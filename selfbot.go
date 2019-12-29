@@ -65,10 +65,15 @@ const (
 // SelfBot parses the available custom commands and creates a handler that calls
 // OnMessageCreate.
 func SelfBot(Session *discordgo.Session) {
-	/* What it assigns the handler to is based on what arguments it takes, this is assigned
+	/*
+	 * What it assigns the handler to is based on what arguments it takes, this is assigned
 	 * to fire whenever a new message is sent.
 	 */
-	Session.AddHandler(LogNewMessage) // TODO: Log edits and stuff
+	if !*noNew {
+		Session.AddHandler(LogMessageNew)
+	}
+	Session.AddHandler(LogMessageUpdate)
+	Session.AddHandler(LogMessageDelete)
 	/*
 	 * ParseCustomCommands() uses json.Unmashal to pass the data of commands.json
 	 * directly to the customCommands map.
@@ -139,11 +144,13 @@ func OnMessageCreate(Session *discordgo.Session, message *discordgo.MessageCreat
 		case "delete":
 			newMessage.SetEmbed(DeleteCustomCommand(messageContent))
 		default:
-			newMessage.SetEmbed(&discordgo.MessageEmbed{
-				Title:       "Hva?",
-				Description: "That doesn't look like a valid sub-command.",
-				Color:       colorError,
-			})
+			if !UserConfig.Lowkey {
+				newMessage.SetEmbed(&discordgo.MessageEmbed{
+					Title:       "Hva?",
+					Description: "That doesn't look like a valid sub-command.",
+					Color:       colorError,
+				})
+			}
 		}
 	case "owoify":
 		newMessage.SetContent(Owoify(messageContent))
@@ -153,15 +160,19 @@ func OnMessageCreate(Session *discordgo.Session, message *discordgo.MessageCreat
 		newMessage.SetContent(Spam(messageContent, true))
 	case "spamns":
 		newMessage.SetContent(Spam(messageContent, false))
+	case "everyone":
+		newMessage.SetContent(TagEveryone(Session, message))
 	default:
 		if content, ok := customCommands[command]; ok {
 			newMessage.SetContent(content)
 		} else {
-			newMessage.SetEmbed(&discordgo.MessageEmbed{
-				Title:       "Hva?",
-				Description: "That doesn't look like a valid command.",
-				Color:       colorError,
-			})
+			if !UserConfig.Lowkey {
+				newMessage.SetEmbed(&discordgo.MessageEmbed{
+					Title:       "Hva?",
+					Description: "That doesn't look like a valid command.",
+					Color:       colorError,
+				})
+			}
 		}
 	}
 	/*
@@ -371,6 +382,11 @@ func HelpFields() []*discordgo.MessageEmbedField {
 			Value:  "Same as spam, but without space delimiters",
 			Inline: true,
 		},
+		&discordgo.MessageEmbedField{
+			Name:   "everyone",
+			Value:  "Manually tag every user in the server (if you can't use @everyone)",
+			Inline: true,
+		},
 	}
 }
 
@@ -439,19 +455,58 @@ func Spam(str string, space bool) string {
 		return nyString.String()[0:strings.LastIndex(nyString.String()[:2000], ":")]
 	}
 	return nyString.String()[:2000]
-	/* This is bad isn't it. */
 }
 
-// LogNewMessage logs a new message to the console upon it being sent.
-func LogNewMessage(Session *discordgo.Session, m *discordgo.MessageCreate) {
-	idInt, err := strconv.Atoi(m.Message.ID)
+// IDToTimestamp converts a Discord message id "snowflake" to a timestamp with some
+// simple maths. Stolen from https://github.com/vegeta897/snow-stamp.
+func IDToTimestamp(id string) time.Time {
+	idInt, err := strconv.Atoi(id)
 	if err != nil {
 		// This like, won't happen.
 		os.Exit(-8008)
 	}
-	timestamp := time.Unix((int64(idInt) / 4194304) + 1420070400000, 0)
-	fmt.Printf("At %v, in %v/%v, %v said:\n%v\n", timestamp, m.GuildID,
+	return time.Unix((int64(idInt)/4194304)+1420070400000, 0)
+}
+
+// TagEveryone manually @'s every person in a server.
+func TagEveryone(Session *discordgo.Session, m *discordgo.MessageCreate) string {
+	guild := m.GuildID
+	members, err := Session.GuildMembers(guild, "", 1000)
+
+	if err != nil {
+		Fatal("Failed to get guild members. Bad connection? " + err.Error())
+	}
+
+	var builder strings.Builder
+	for _, member := range members {
+		if member.User.ID == m.Message.Author.ID {
+			// Don't waste space tagging ourselves.
+			continue
+		}
+		fmt.Fprintf(&builder, member.Mention())
+		fmt.Fprintf(&builder, " ")
+	}
+	return builder.String()
+}
+
+// LogMessageNew logs message creation events.
+func LogMessageNew(Session *discordgo.Session, m *discordgo.MessageCreate) {
+	fmt.Printf("At %v, in %v/%v, %v said:\n%v\n", IDToTimestamp(m.Message.ID), m.GuildID,
 		m.ChannelID, m.Message.Author, m.Message.Content)
+}
+
+// LogMessageUpdate logs message edit events.
+func LogMessageUpdate(Session *discordgo.Session, m *discordgo.MessageUpdate) {
+	fmt.Printf("At %v, in %v/%v, %v updated a message to say: %v\n",
+		IDToTimestamp(m.Message.ID), m.Message.GuildID, m.Message.ChannelID, m.Message.Author,
+		m.Message.Content)
+}
+
+// LogMessageDelete logs message deletion events.
+func LogMessageDelete(Session *discordgo.Session, m *discordgo.MessageDelete) {
+	fmt.Printf("At %v, in %v/%v, %v deleted a message saying: %v\n",
+		IDToTimestamp(m.Message.ID), m.Message.GuildID, m.Message.ChannelID, m.Message.Author,
+		m.Message.Content)
 }
 
 /* I'll leave this at the bottom because its unsightly. */
