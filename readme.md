@@ -1,5 +1,7 @@
 # Blacksheep: The Discord Tooling Powerhouse.
 
+**Discord is like crackin down on non-client uses of their user endpoints or something?? So like use at ur own risk u might get banned**
+
 ## Design
 
 Blacksheep is built in Go, a fast and powerful compiled language, instead of the
